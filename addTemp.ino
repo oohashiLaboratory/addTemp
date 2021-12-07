@@ -54,6 +54,8 @@ int sleep_time;                           //deeepsleep時間
 int elapsed_min;                          //経過分数
 int elapsed_time;                         //経過時間
 
+float vbat = 0;
+
 void setup() 
 {
     M5.begin(); 
@@ -85,7 +87,7 @@ void loop()
   get_time();
   sleep_time_conf();
   //lcd_display();
-
+  vbat = M5.Axp.GetBatVoltage();//バッテリ電圧取得
   if(now_hour != old_hour)//前回起動時と現在時が違うとき
   {
     if(aveTemp == 0)    //平均気温が0の時＝初回起動時or日付が変わったとき
@@ -181,6 +183,8 @@ void ambient_access(void)       //アンビエントアクセス関数
     ambient.set(2, addTemp);
     ambient.set(3,aveTemp10);
     ambient.set(4,addTemp10);
+
+    ambient.set(5,vbat);    //バッテリ電圧送信
     
     ambient.send();                   //ambientにデータを送信
 }
