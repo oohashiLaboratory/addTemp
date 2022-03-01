@@ -7,23 +7,22 @@
 
 SHT3X sht30;            //M5Stack用環境センサユニット ver.2用
 
-#include <WiFi.h>       //wifi接続
+#include <WiFi.h>       //wifi接続用
 
-
-#include "time.h"       //現在時間取得
+#include "time.h"       //現在時間取得用
 #include "Ambient.h"    //Ambient
 
-const char* ssid     = "HUAWEI-F4E1";//WIFI名
-const char* password = "64141340";//wifiパスワード
+const char* ssid     = "HUAWEI-F4E1";   //WIFI名
+const char* password = "64141340";      //wifiパスワード
 
 WiFiClient client;
 Ambient ambient;
 
-unsigned int channelId = ambientID; // AmbientチャネルＩＤ
-const char* writeKey = "ambientWriteKey"; // Ambientライトキー
+unsigned int channelId = ambientID;         // AmbientチャネルＩＤ
+const char* writeKey = "ambientWriteKey";   // Ambientライトキー
 
 #define uS_TO_S_FACTOR 1000000  // マイクロ秒から秒への変換係数Conversion factor for micro seconds to seconds
-#define SLEEP_CONST  600        // スリープ時間の基準値
+#define SLEEP_CONST  600        // スリープ時間の基準値(秒)
 
 //関数プロトタイプ宣言
 void wifi_conect(void);
@@ -43,22 +42,22 @@ RTC_DATA_ATTR float aveTemp10 = 0.0;        //積算温度変数
 float hum = 0.0;                            //湿度変数
 
 //時間管理用変数
-char now[20];
-char now_day;
-int now_hour;
-int now_min;
-int now_sec;
-RTC_DATA_ATTR int old_hour = 0;
+char now[20];                             //時刻管理配列
+char now_day;                             //在日付
+int now_hour;                             //現在時
+int now_min;                              //現在分
+int now_sec;                              //現在秒
+RTC_DATA_ATTR int old_hour = 0;           //前回時管理変数
 RTC_DATA_ATTR char day = 0;               //日付管理変数
 int sleep_time;                           //deeepsleep時間
 int elapsed_min;                          //経過分数
 int elapsed_time;                         //経過時間
 
-float vbat = 0;
+float vbat = 0;                           //バッテリ電圧
 
 void setup() 
 {
-    M5.begin(); 
+    M5.begin();                                     //M5stickを初期化
     M5.Axp.ScreenBreath(10);                        //画面の輝度を少し下げる
     M5.Lcd.setRotation(3);                          //画面を("x*90°")回転させる
     M5.Lcd.fillScreen(BLACK);                       //画面を黒で塗りつぶす
@@ -68,8 +67,8 @@ void setup()
 
 void loop() 
 {
-  led_blink();  //led点滅
-  if(sht30.get() == 0)
+  led_blink();  //led点滅処理
+  if(sht30.get() == 0)  //sht30(温度センサ)が接続されているとき
   {
     temp = sht30.cTemp;               //温度取り込み
     hum = sht30.humidity;             //湿度取り込み
@@ -83,11 +82,13 @@ void loop()
   {
     hAveTemp = (hAveTemp+temp)/ 2;
   }
-  wifi_conect();
-  get_time();
-  sleep_time_conf();
-  //lcd_display();
-  vbat = M5.Axp.GetBatVoltage();//バッテリ電圧取得
+    
+  wifi_conect();        //Wi-Fi接続
+  get_time();           //現在時刻取得
+  sleep_time_conf();    //スリープ時間決定
+  //lcd_display();      //LCD表示
+  vbat = M5.Axp.GetBatVoltage();//本体バッテリ電圧取得
+    
   if(now_hour != old_hour)//前回起動時と現在時が違うとき
   {
     if(aveTemp == 0)    //平均気温が0の時＝初回起動時or日付が変わったとき
@@ -113,12 +114,12 @@ void loop()
   
   if(day != now_day)    //日付が変わった時の処理
   {
-    ambient_access();   //Ambientにデータを送信
-    WiFi.disconnect();//wifi接続
-    addTemp = addTemp + aveTemp;//積算気温計算
-    aveTemp = 0;//日平均気温リセット
+    ambient_access();               //Ambientにデータを送信
+    WiFi.disconnect();              //wifi接続
+    addTemp = addTemp + aveTemp;    //積算気温計算
+    aveTemp = 0;                    //日平均気温リセット
 
-    addTemp10 = addTemp10 + aveTemp10;//
+    addTemp10 = addTemp10 + aveTemp10;
     aveTemp10 = 0;
   }
   else
@@ -126,17 +127,17 @@ void loop()
     WiFi.disconnect();  //wifi切断
   }
 
-  day = now_day;
-  old_hour = now_hour;
-  esp_deep_sleep(sleep_time * uS_TO_S_FACTOR);
+  day = now_day;        //日付を更新
+  old_hour = now_hour;  //時間更新
+  esp_deep_sleep(sleep_time * uS_TO_S_FACTOR);//指定分だけスリープ状態に
 }
 
 
 void wifi_conect(void)  //wifi接続関数
 {
-    WiFi.begin(ssid, password);           //  Wi-Fi APに接続
+    WiFi.begin(ssid, password);             //Wi-Fi APに接続
 
-    while (WiFi.status() != WL_CONNECTED) //  Wi-Fi AP接続待ち
+    while (WiFi.status() != WL_CONNECTED)   //Wi-Fi AP接続待ち
     {
        delay(500);
     }
@@ -150,7 +151,7 @@ void get_time(void)     //時間取得関数
 {
     configTime(9 * 3600, 0, "ntp.nict.jp"); // NTP時間をローカルに設定　/Set ntp time to local
     struct tm timeInfo;
-    getLocalTime(&timeInfo); //ローカル時間を取得
+    getLocalTime(&timeInfo);    //ローカル時間を取得
   
     sprintf(now, "%04d/%02d/%02d %02d:%02d:%02d",
       timeInfo.tm_year + 1900,
@@ -169,14 +170,14 @@ void get_time(void)     //時間取得関数
 
 void sleep_time_conf(void)  //スリープ時間決定関数
 {
-  elapsed_min = (now_min%10)*60; //経過分＝現在分数÷10の剰余×60
-  elapsed_time = now_sec + elapsed_min;//経過時間=現在秒数+経過分数
-  sleep_time = SLEEP_CONST - elapsed_time;//スリープ時間＝睡眠定数-経過時間
+  elapsed_min = (now_min%10)*60;            //経過分＝現在分数÷10の剰余×60
+  elapsed_time = now_sec + elapsed_min;     //経過時間=現在秒数+経過分数
+  sleep_time = SLEEP_CONST - elapsed_time;  //スリープ時間＝睡眠定数-経過時間
 }
 
-void ambient_access(void)       //アンビエントアクセス関数
+void ambient_access(void)                   //アンビエントアクセス関数
 {
-    ambient.begin(channelId, writeKey, &client); //チャネルIDとライトキーを指定してAmbientの初期化
+    ambient.begin(channelId, writeKey, &client);    //チャネルIDとライトキーを指定してAmbientの初期化
 
     //Ambientに送信するデータをセット 
     ambient.set(1, aveTemp);
@@ -184,12 +185,12 @@ void ambient_access(void)       //アンビエントアクセス関数
     ambient.set(3,aveTemp10);
     ambient.set(4,addTemp10);
 
-    ambient.set(5,vbat);    //バッテリ電圧送信
+    ambient.set(5,vbat);              //バッテリ電圧送信
     
     ambient.send();                   //ambientにデータを送信
 }
 
-void led_blink(void)            //led点滅関数
+void led_blink(void)                //led点滅関数
 {
   digitalWrite(GPIO_NUM_10, LOW);   //内蔵led点灯
   delay(500);
