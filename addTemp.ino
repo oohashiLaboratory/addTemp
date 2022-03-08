@@ -25,12 +25,12 @@ const char* writeKey = "ambientWriteKey";   // Ambientライトキー
 #define SLEEP_CONST  600        // スリープ時間の基準値(秒)
 
 //関数プロトタイプ宣言
-void wifi_conect(void);
-void ambient_access(void);
-void lcd_display(void);
-void get_time(void);
-void sleep_time_conf(void);
-void led_blink(void);
+void wifi_conect(void);     //wifi接続関数
+void ambient_access(void);  //アンビエントアクセス関数
+void lcd_display(void);     //LCD表示関数
+void get_time(void);        //時間取得関数
+void sleep_time_conf(void); //スリープ時間決定関数
+void led_blink(void);       //led点滅関数
 
 //温度測定用変数
 float temp = 0.0;                           //温度変数
